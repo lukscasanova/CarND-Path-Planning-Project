@@ -113,9 +113,9 @@ public:
         }
 
         //debug
-        for (int i = 0; i < s_vals.size(); ++i){
-        	cout << "s,d: " << s_vals[i] << ", " << d_vals[i] << endl;
-        }
+        // for (int i = 0; i < s_vals.size(); ++i){
+        // 	cout << "s,d: " << s_vals[i] << ", " << d_vals[i] << endl;
+        // }
 
 	}
 
