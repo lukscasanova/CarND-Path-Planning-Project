@@ -190,7 +190,7 @@ double scoreTrajectory(Trajectory traj){
 
 
   double ACC_LIMIT = 5, JERK_LIMIT =30, VEL_LIMIT=22, ANG_VEL_LIMIT=0.4, ANG_ACC_LIMIT=10000;
-  double ACC_WEIGHT= 400, JERK_WEIGHT=100, MAXVEL_WEIGHT=-200, MINVEL_WEIGHT=-150, ANG_VEL_WEIGHT=1000, ANG_ACC_WEIGHT=20;
+  double ACC_WEIGHT= 400, JERK_WEIGHT=110, MAXVEL_WEIGHT=-120, MINVEL_WEIGHT=-400, ANG_VEL_WEIGHT=1000, ANG_ACC_WEIGHT=30;
 
   if(maxAcc>ACC_LIMIT){
     ACC_WEIGHT = 1000000;
@@ -201,7 +201,7 @@ double scoreTrajectory(Trajectory traj){
   }
 
   if(maxVel > VEL_LIMIT){
-    MAXVEL_WEIGHT = 1000000;
+    MAXVEL_WEIGHT = 10000000;
   }
 
   if(minVel < 0){
@@ -223,7 +223,7 @@ double scoreTrajectory(Trajectory traj){
   int laneSwitches, outsideLane, outsideStreet;
   calcLanesParameters(traj, laneSwitches, outsideLane, outsideStreet);
 
-  double SWITCH_WEIGHT=0, OUTSIDE_LANE_WEIGHT=10, OUTSIDE_STREET_WEIGHT=10000;
+  double SWITCH_WEIGHT=50, OUTSIDE_LANE_WEIGHT=25, OUTSIDE_STREET_WEIGHT=10000;
   int OUTSIDE_LANE_LIMIT = 100;
 
   if(outsideLane>OUTSIDE_LANE_LIMIT) OUTSIDE_LANE_WEIGHT = 100;
@@ -247,22 +247,34 @@ bool collides(Trajectory traj, std::vector<Car> cars, double time){
     int traj_index = i/DELTA_T;
     for(int j=0; j < cars.size(); j++){
       double ego_x, ego_y, car_x, car_y;
+      double ego_d, ego_s0, car_s, car_d;
+
+      double speed_factor=0.75;
+
       ego_x = traj.x_vals[traj_index];
       ego_y = traj.y_vals[traj_index];
+      ego_d = traj.d_vals[traj_index];
+      car_d = cars[j].d;
+      ego_s0 = traj.s_vals[0];
+      car_s = cars[j].s;
 
-      car_x = cars[j].x+cars[j].x_v*i/2;
-      car_y = cars[j].y+cars[j].y_v*i/2;
+      // // check if car in front
+      // if(car_s>ego_s0){
+      //   speed_factor = 0.5;
+      // }
 
-      if(dist (ego_x, ego_y, car_x, car_y) < 4+2*i){
+      car_x = cars[j].x+cars[j].x_v*i*speed_factor;
+      car_y = cars[j].y+cars[j].y_v*i*speed_factor;
+
+      if(dist (ego_x, ego_y, car_x, car_y) < 4+4*i){
         // test same lane
-        double ego_d, car_d;
-        ego_d = traj.d_vals[traj_index];
-        car_d = cars[j].d;
+        
         if(abs(ego_d-car_d)<2.5){
-          // cout << "predicted collision"<< endl;
-          // cout << "T: " << time_step << endl;
-          // printf("ego xy: %lf, %lf x ", ego_x, ego_y);
-          // printf("car xy: %lf, %lf\n", car_x, car_y);
+          cout << "predicted collision"<< endl;
+          cout << "T: " << time_step << endl;
+          printf("ego xy: %lf, %lf x ", ego_x, ego_y);
+          printf("car xy: %lf, %lf\n", car_x, car_y);
+          
           return true;
         }        
       }
@@ -560,8 +572,8 @@ int main() {
                 end.s_v = 2.5*j;
                 for(int m = 0; m <= 10; m++){ // 10 endpoints
                   end.s = start.s + 5+ m*10;
-                  for(int n = 0; n < 2; n++){ // 3 lanes 
-                    end.d = 2+n*4;
+                  for(int n = 0; n < 3; n++){ // 3 lanes 
+                    end.d = 2.1+n*3.9;
                     Trajectory temp = generateTrajectory(start, end, previous, T,stitchPoint, ms);
                     // scoreTrajectory(temp);
                     trajs.push_back(temp);
