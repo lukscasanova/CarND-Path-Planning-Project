@@ -57,6 +57,11 @@ public:
 	double d_v;
 	double d_a;
 
+	double x;
+	double y;
+	double x_v;
+	double y_v;
+
 	double delta_t;
 
 	bool has_last;

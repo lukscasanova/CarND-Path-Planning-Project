@@ -82,9 +82,13 @@ class Trajectory{
 public:
 
 	void createJerkMinimized(Car start, Car end, double time_interval, MapSpline ms){
-		
+		cout << "createJerkMinimized" << endl;
+
+		start.s = ms.correct_s(start.s);
+		end.s = ms.correct_s(end.s);
 		std::vector<double> start_s, start_d, end_s, end_d;
         start_s = {start.s, start.s_v, start.s_a};
+
         end_s 	= {end.s , end.s_v, end.s_a};
 
         start_d = {start.d, start.d_v, start.d_a};
@@ -121,6 +125,15 @@ public:
 
 	void extendJerkMinimized(double curr_s, int stitchPoint, Car end, double time_interval, MapSpline ms){
 
+
+		// check loop
+		double s_correction = 0;
+		if(s_vals[0]>end.s){
+			if(!ms.transition){
+				s_correction = -6945.554;
+			}
+		}
+
 		if(s_vals.size() == 0){
 			Car start;
 			createJerkMinimized(start, end, time_interval, ms);
@@ -130,9 +143,11 @@ public:
 		if(stitchPoint<2){
 			stitchPoint=2;
 		}
-		cout << "stitchPoint: " << stitchPoint << endl;
+		// cout << "stitchPoint: " << stitchPoint << endl;
 
 		int start_index=-1;
+		curr_s = ms.correct_s(curr_s);
+		// cout << "curr s corr: " << curr_s << endl;
 		while(curr_s>s_vals[++start_index]);
 		stitchPoint+=start_index;
 
@@ -143,11 +158,22 @@ public:
 		double start_vel_s = (s_vals[stitchPoint] - s_vals[stitchPoint-1])/0.02;
 		double start_vel_d = (d_vals[stitchPoint] - d_vals[stitchPoint-1])/0.02;
 
-		double start_acc_s = (s_vals[stitchPoint] - s_vals[stitchPoint-1]*2 + s_vals[stitchPoint-2])/0.02;
-		double start_acc_d = (d_vals[stitchPoint] - d_vals[stitchPoint-1]*2 + d_vals[stitchPoint-2])/0.02;
+		double start_acc_s = (s_vals[stitchPoint] - s_vals[stitchPoint-1]*2 + s_vals[stitchPoint-2])/(0.0004);
+		double start_acc_d = (d_vals[stitchPoint] - d_vals[stitchPoint-1]*2 + d_vals[stitchPoint-2])/(0.0004);
+
+		// cout << "start acc s: " << start_acc_s << endl;
 
 		double start_pos_s = s_vals[stitchPoint-1];
 		double start_pos_d = d_vals[stitchPoint-1];
+
+		// cout << "start s:" << start_pos_s << endl;
+		// cout << "end s:" << end.s << endl;
+
+		start_pos_s += s_correction;
+		end.s = ms.correct_s(end.s);
+
+		// cout << "start s:" << start_pos_s << endl;
+		// cout << "end s:" << end.s << endl;
 
 		std::vector<double> start_s, start_d, end_s, end_d;
         start_s = {start_pos_s, start_vel_s, start_acc_s};
@@ -164,19 +190,22 @@ public:
         std::vector<double> new_s_vals, new_d_vals;
         std::vector<double> new_x_vals, new_y_vals;
 
-        for(int i = start_index; i < stitchPoint; ++i){
+        for(int i = start_index; i < stitchPoint-1; ++i){
         	// if(curr_s>s_vals[i]) continue;
-        	double s = s_vals[i];
+        	double s = s_vals[i] + s_correction;
 			double d = d_vals[i];
+
+			// cout << "x,y: " << x_vals[i] << ", " << y_vals[i] << endl;
 
 			new_x_vals.push_back(x_vals[i]);
 			new_y_vals.push_back(y_vals[i]);
 
-        	new_s_vals.push_back(s);
+        	new_s_vals.push_back(ms.correct_s(s));
         	new_d_vals.push_back(d);
         }
+        // cout << "." << endl;
 
-        for(int i = 1 ; i < (int) time_interval/delta_t; ++i ){
+        for(int i = 0; i < (int) time_interval/delta_t; ++i ){
         	double t = i*delta_t;
 
         	double s = evaluate(coeff_s, t);
@@ -186,6 +215,8 @@ public:
         	new_d_vals.push_back(d);
 
         	auto xy = ms.getXY(s,d);
+        	// cout << "x,y: " << xy[0] << xy[1] << endl;
+
 
         	new_x_vals.push_back(xy[0]);
 			new_y_vals.push_back(xy[1]);
@@ -201,8 +232,11 @@ public:
 
 	}
 
-	void evaluateLimits(){}
-
+	void print(){
+		for(int i =0; i < s_vals.size(); ++i){
+			printf("x,y,s,d: %lf, %lf, %lf, %lf\n", x_vals[i], y_vals[i], s_vals[i], d_vals[i]);
+		}
+	}
 	std::vector<double> s_vals;
 	std::vector<double> d_vals;
 
