@@ -39,7 +39,6 @@ vector<double> smoothTrajectory(vector<double> traj){
   int traj_size = traj.size();
   vector<double> new_traj;
   new_traj.push_back(traj[0]);
-  // new_traj.push_back(traj[1]);
 
   for(int i = 1; i < traj_size-1; ++i){
     double temp = (traj[i-1] + traj[i] + traj[i+1])/3;
@@ -64,17 +63,17 @@ Trajectory generateTrajectory(Car start, Car end, Trajectory previous, double ti
     previous.extendJerkMinimized(start.s, stitchPoint, end, time_interval, ms);
   }
 
-  previous.x_vals = smoothTrajectory(previous.x_vals);
-  previous.y_vals = smoothTrajectory(previous.y_vals);
+  // previous.x_vals = smoothTrajectory(previous.x_vals);
+  // previous.y_vals = smoothTrajectory(previous.y_vals);
 
-  previous.x_vals = smoothTrajectory(previous.x_vals);
-  previous.y_vals = smoothTrajectory(previous.y_vals);
+  // previous.x_vals = smoothTrajectory(previous.x_vals);
+  // previous.y_vals = smoothTrajectory(previous.y_vals);
 
-  previous.x_vals = smoothTrajectory(previous.x_vals);
-  previous.y_vals = smoothTrajectory(previous.y_vals);
+  // previous.x_vals = smoothTrajectory(previous.x_vals);
+  // previous.y_vals = smoothTrajectory(previous.y_vals);
 
-  previous.x_vals = smoothTrajectory(previous.x_vals);
-  previous.y_vals = smoothTrajectory(previous.y_vals);
+  // previous.x_vals = smoothTrajectory(previous.x_vals);
+  // previous.y_vals = smoothTrajectory(previous.y_vals);
 
 
 
@@ -90,8 +89,8 @@ void calcVelAccJerk(Trajectory traj, double& minVel, double& maxVel,
   maxJerk = 0;
   maxVel = 0;
   minVel = 9999;
-  maxAngVel=0;
-  maxAngAcc=0;
+  maxAngVel = 0;
+  maxAngAcc = 0;
   
   double acc, vel, jerk, ang_vel, angle, ang_acc;
   double last_vel=0;
@@ -168,7 +167,6 @@ void calcLanesParameters(Trajectory traj, int& laneSwitches, int& outsideLane, i
       outsideLane++;
     }
     if(!testInStreet(d)){
-      // cout << "d: " << d << endl;
       outsideStreet++;
     }
   }
@@ -189,8 +187,8 @@ double scoreTrajectory(Trajectory traj){
   calcVelAccJerk(traj, minVel, maxVel, maxAcc, maxJerk, maxAngVel, maxAngAcc);
 
 
-  double ACC_LIMIT = 5, JERK_LIMIT =30, VEL_LIMIT=22, ANG_VEL_LIMIT=0.4, ANG_ACC_LIMIT=10000;
-  double ACC_WEIGHT= 400, JERK_WEIGHT=110, MAXVEL_WEIGHT=-120, MINVEL_WEIGHT=-400, ANG_VEL_WEIGHT=1000, ANG_ACC_WEIGHT=30;
+  double ACC_LIMIT = 7, JERK_LIMIT = 30, VEL_LIMIT = 22, ANG_VEL_LIMIT = 0.4, ANG_ACC_LIMIT = 10000;
+  double ACC_WEIGHT = 250, JERK_WEIGHT = 150, MAXVEL_WEIGHT = -150, MINVEL_WEIGHT = -400, ANG_VEL_WEIGHT = 10000, ANG_ACC_WEIGHT=30;
 
   if(maxAcc>ACC_LIMIT){
     ACC_WEIGHT = 1000000;
@@ -223,7 +221,7 @@ double scoreTrajectory(Trajectory traj){
   int laneSwitches, outsideLane, outsideStreet;
   calcLanesParameters(traj, laneSwitches, outsideLane, outsideStreet);
 
-  double SWITCH_WEIGHT=50, OUTSIDE_LANE_WEIGHT=25, OUTSIDE_STREET_WEIGHT=10000;
+  double SWITCH_WEIGHT = 50, OUTSIDE_LANE_WEIGHT = 25, OUTSIDE_STREET_WEIGHT = 10000;
   int OUTSIDE_LANE_LIMIT = 100;
 
   if(outsideLane>OUTSIDE_LANE_LIMIT) OUTSIDE_LANE_WEIGHT = 100;
@@ -258,25 +256,11 @@ bool collides(Trajectory traj, std::vector<Car> cars, double time){
       ego_s0 = traj.s_vals[0];
       car_s = cars[j].s;
 
-      // // check if car in front
-      // if(car_s>ego_s0){
-      //   speed_factor = 0.5;
-      // }
-
       car_x = cars[j].x+cars[j].x_v*i*speed_factor;
       car_y = cars[j].y+cars[j].y_v*i*speed_factor;
 
-      if(dist (ego_x, ego_y, car_x, car_y) < 4+4*i){
-        // test same lane
-        
-        if(abs(ego_d-car_d)<2.5){
-          cout << "predicted collision"<< endl;
-          cout << "T: " << time_step << endl;
-          printf("ego xy: %lf, %lf x ", ego_x, ego_y);
-          printf("car xy: %lf, %lf\n", car_x, car_y);
-          
-          return true;
-        }        
+      if(dist (ego_x, ego_y, car_x, car_y) < 8+4*i && abs(ego_d-car_d)<2.5){
+         return true;
       }
     }
   }
@@ -428,16 +412,6 @@ vector<double> getXY(double s, double d, vector<double> maps_s, vector<double> m
 }
 
 
-
-
-
-typedef struct planner_state{
-  double last_s;
-  double last_d;
-  double last_speed;
-  bool initialized;
-} State;
-
 int main() {
   uWS::Hub h;
 
@@ -517,7 +491,7 @@ int main() {
             std::vector<Car> cars;
 
             for(int i =0; i < sensor_fusion.size(); ++i){
-              cout << sensor_fusion[i] << endl;
+              // cout << sensor_fusion[i] << endl;
               if(sensor_fusion[i][6]>0){
                 Car c;
                 // using s and d to store xy values;
@@ -531,10 +505,6 @@ int main() {
               }
             }
 
-            cout << "BP 1" << endl;
-            std::cout << "curr:" << car_s   << ", " << car_d    << std::endl;
-
-
           	json msgJson;
 
           	vector<double> next_x_vals;
@@ -543,10 +513,7 @@ int main() {
             MapSpline ms;
             ms.create(car_s, map_waypoints_s, map_waypoints_x, map_waypoints_y, map_waypoints_dx, map_waypoints_dy);
 
-            cout << "BP 2" << endl;
-
             int path_size = previous_path_x.size();
-
 
             Car start, end;
 
@@ -558,31 +525,24 @@ int main() {
             start.d_v = 0;
             start.d_a = 0;
 
-            Trajectory out;
-
             if(path_size<150){
               std::vector<Trajectory> trajs;
               double T = 4;
               int stitchPoint = 30;
 
               // Generate Several Trajectories
-              // for(int i = 0; i < 1; i++){
-
-              for(int j = 0; j < 10; j++){ // 5 velocities
+              for(int j = 0; j < 10; j++){ // 10 velocities
                 end.s_v = 2.5*j;
                 for(int m = 0; m <= 10; m++){ // 10 endpoints
                   end.s = start.s + 5+ m*10;
                   for(int n = 0; n < 3; n++){ // 3 lanes 
                     end.d = 2.1+n*3.9;
                     Trajectory temp = generateTrajectory(start, end, previous, T,stitchPoint, ms);
-                    // scoreTrajectory(temp);
                     trajs.push_back(temp);
                   }
                 }
               }
-              // }
 
-              cout << "generated " << trajs.size() << "trajectories" << endl;
               // Eliminate collision trajectorie
               std::vector<Trajectory> collision_free_trajs;
               for(int i = 0; i < trajs.size(); ++i){
@@ -590,14 +550,8 @@ int main() {
                   collision_free_trajs.push_back(trajs[i]);
                 }
               }
-              cout << "collision_free_trajs:  " << collision_free_trajs.size() << "trajectories" << endl;
-
 
               // Score and choose the best
-
-              
-
-
               if(collision_free_trajs.size()>0){
 
                 double bestScore = scoreTrajectory(collision_free_trajs[0]);
@@ -611,8 +565,7 @@ int main() {
                   }
                 }
 
-
-                cout << "chosen trajetory: " << endl;
+                // cout << "chosen trajetory: " << endl;
                 scoreTrajectory(collision_free_trajs[index]); 
                 collision_free_trajs[index].print();
 
@@ -621,7 +574,7 @@ int main() {
                 next_x_vals = collision_free_trajs[index].x_vals;
                 next_y_vals = collision_free_trajs[index].y_vals;   
               }else{
-                printf("repeating last path");
+                // printf("repeating last path");
                 for(int i = 0; i < path_size; ++i){
                   next_x_vals.push_back(previous_path_x[i]);
                   next_y_vals.push_back(previous_path_y[i]);
