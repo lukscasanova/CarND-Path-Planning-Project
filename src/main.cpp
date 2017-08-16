@@ -212,7 +212,7 @@ double scoreTrajectory(Trajectory traj){
 
 
   score += KINEMATIC_WEIGHT*(maxAcc*ACC_WEIGHT + maxJerk*JERK_WEIGHT 
-    + maxVel*MAXVEL_WEIGHT+minVel*MINVEL_WEIGHT + maxAngVel*ANG_VEL_WEIGHT + maxAngAcc*ANG_ACC_WEIGHT);
+    + maxVel*maxVel*MAXVEL_WEIGHT+minVel*MINVEL_WEIGHT + maxAngVel*ANG_VEL_WEIGHT + maxAngAcc*ANG_ACC_WEIGHT);
 
   /*********************************************************/
 
