@@ -18,7 +18,6 @@ public:
 		y += d*dy;
 
 		return {x,y};
-
 	}
 
 	double correct_s(double s){

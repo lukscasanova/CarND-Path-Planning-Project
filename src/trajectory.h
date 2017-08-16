@@ -87,8 +87,9 @@ public:
 		end.s = ms.correct_s(end.s);
 		std::vector<double> start_s, start_d, end_s, end_d;
         start_s = {start.s, start.s_v, start.s_a};
-
         end_s 	= {end.s , end.s_v, end.s_a};
+
+        // never change lane when starting
 
         start_d = {start.d, start.d_v, start.d_a};
         end_d   = {end.d , end.d_v, end.d_a};
@@ -123,7 +124,6 @@ public:
 	}
 
 	void extendJerkMinimized(double curr_s, int stitchPoint, Car end, double time_interval, MapSpline ms){
-
 
 		// check loop
 		double s_correction = 0;
@@ -181,19 +181,16 @@ public:
         std::vector<double> new_s_vals, new_d_vals;
         std::vector<double> new_x_vals, new_y_vals;
 
-
         // Remove points already visited and copy over old path until stitch point
         for(int i = start_index; i < stitchPoint-1; ++i){
         	double s = s_vals[i] + s_correction;
 			double d = d_vals[i];
-
 
 			new_x_vals.push_back(x_vals[i]);
 			new_y_vals.push_back(y_vals[i]);
 
         	new_s_vals.push_back(ms.correct_s(s));
         	new_d_vals.push_back(d);
-
 
         }
 
@@ -246,7 +243,7 @@ public:
 			printf("x,y,s,d: %lf, %lf, %lf, %lf\n", x_vals[i], y_vals[i], s_vals[i], d_vals[i]);
 		}
 	}
-	
+
 	std::vector<double> s_vals;
 	std::vector<double> d_vals;
 

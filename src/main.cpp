@@ -180,15 +180,15 @@ double scoreTrajectory(Trajectory traj){
   double score=0;
 
   double KINEMATIC_WEIGHT=1;
-  double LANE_WEIGHT=1;
+  double LANE_WEIGHT=2;
 
   /*************** SCORE KINEMATICS *******************/
   double maxAcc, maxJerk, maxVel, minVel, maxAngVel, maxAngAcc;
   calcVelAccJerk(traj, minVel, maxVel, maxAcc, maxJerk, maxAngVel, maxAngAcc);
 
 
-  double ACC_LIMIT = 7, JERK_LIMIT = 10, VEL_LIMIT = 22, ANG_VEL_LIMIT = 0.5, ANG_ACC_LIMIT = 10000;
-  double ACC_WEIGHT = 350, JERK_WEIGHT = 300, MAXVEL_WEIGHT = -150, MINVEL_WEIGHT = -400, ANG_VEL_WEIGHT = 10000, ANG_ACC_WEIGHT=30;
+  double ACC_LIMIT = 5, JERK_LIMIT = 5, VEL_LIMIT = 22, ANG_VEL_LIMIT = 0.5, ANG_ACC_LIMIT = 10000;
+  double ACC_WEIGHT = 500, JERK_WEIGHT = 300, MAXVEL_WEIGHT = -120, MINVEL_WEIGHT = -400, ANG_VEL_WEIGHT = 10000, ANG_ACC_WEIGHT=30;
 
   if(maxAcc>ACC_LIMIT){
     ACC_WEIGHT = 1000000;
@@ -221,7 +221,7 @@ double scoreTrajectory(Trajectory traj){
   int laneSwitches, outsideLane, outsideStreet;
   calcLanesParameters(traj, laneSwitches, outsideLane, outsideStreet);
 
-  double SWITCH_WEIGHT = 50, OUTSIDE_LANE_WEIGHT = 25, OUTSIDE_STREET_WEIGHT = 10000;
+  double SWITCH_WEIGHT = 100, OUTSIDE_LANE_WEIGHT = 25, OUTSIDE_STREET_WEIGHT = 10000;
   int OUTSIDE_LANE_LIMIT = 100;
 
   if(outsideLane>OUTSIDE_LANE_LIMIT) OUTSIDE_LANE_WEIGHT = 100;
@@ -533,10 +533,10 @@ int main() {
               // Generate Several Trajectories
               for(int j = 0; j < 10; j++){ // 10 velocities
                 end.s_v = 2.5*j;
-                for(int m = 0; m <= 10; m++){ // 10 endpoints
+                for(int m = 1; m <= 10; m++){ // 10 endpoints
                   end.s = start.s + 5+ m*10;
                   for(int n = 0; n < 3; n++){ // 3 lanes 
-                    end.d = 2.1+n*3.9;
+                    end.d = 2.2+n*3.8;
                     Trajectory temp = generateTrajectory(start, end, previous, T,stitchPoint, ms);
                     trajs.push_back(temp);
                   }
@@ -566,8 +566,8 @@ int main() {
                 }
 
                 // cout << "chosen trajetory: " << endl;
-                scoreTrajectory(collision_free_trajs[index]); 
-                collision_free_trajs[index].print();
+                // scoreTrajectory(collision_free_trajs[index]); 
+                // collision_free_trajs[index].print();
 
                 previous = collision_free_trajs[index];
 
