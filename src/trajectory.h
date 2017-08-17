@@ -66,8 +66,16 @@ vector<double> JMT(vector< double> start, vector <double> end, double T)
 }
 
 
+/**
+ * @brief      Evaluates a polynomial
+ *
+ * @param[in]  coeff  The polynomial coefficients
+ * @param[in]  t      time to evaluate
+ *
+ * @return     the polynomial evaluated at time t
+ */
 double evaluate(std::vector<double> coeff, double t){
-  
+   
   double result = coeff[0];
   double t0 = t;
   for(size_t i = 1 ; i < coeff.size(); ++i){
@@ -81,6 +89,15 @@ double evaluate(std::vector<double> coeff, double t){
 class Trajectory{
 public:
 
+	/**
+	 * @brief      Creates a jerk minimized trajectory using the start and end
+	 *             configurations
+	 *
+	 * @param[in]  start          The start configuration
+	 * @param[in]  end            The end configuration
+	 * @param[in]  time_interval  The time interval
+	 * @param[in]  ms             The Frenet to Cartesian converter
+	 */
 	void createJerkMinimized(Car start, Car end, double time_interval, MapSpline ms){
 
 		start.s = ms.correct_s(start.s);
@@ -123,6 +140,16 @@ public:
 
 	}
 
+	/**
+	 * @brief      Extends the current trajectory,  cutting it at the stitch
+	 *             point, and using the end configuration.
+	 *
+	 * @param[in]  curr_s         The curr s position
+	 * @param[in]  stitchPoint    The stitch point
+	 * @param[in]  end            The end configuration
+	 * @param[in]  time_interval  The time interval
+	 * @param[in]  ms             The Frenet-to-Cartesian converter
+	 */
 	void extendJerkMinimized(double curr_s, int stitchPoint, Car end, double time_interval, MapSpline ms){
 
 		// check loop
@@ -152,6 +179,8 @@ public:
 			stitchPoint=s_vals.size()-1;
 		}
 
+		// We obtain the start configuration from the stitch point
+		// We calculate position, velocity and acceleration at the stitch point
 		double start_vel_s = (s_vals[stitchPoint] - s_vals[stitchPoint-1])/0.02;
 		double start_vel_d = (d_vals[stitchPoint] - d_vals[stitchPoint-1])/0.02;
 
@@ -166,6 +195,7 @@ public:
 		start_pos_s += s_correction;
 		end.s = ms.correct_s(end.s);
 
+		// Generates a trajectory in Frenet space
 		std::vector<double> start_s, start_d, end_s, end_d;
         start_s = {start_pos_s, start_vel_s, start_acc_s};
         end_s 	= {end.s , end.s_v, end.s_a};
@@ -210,7 +240,8 @@ public:
 			new_y_vals.push_back(xy[1]);
         }
 
-        // Create single spline from old and new parts
+        // In order to create a truely smooth trajectory, we create a spline
+        // using sampled points from the stitched up trajectory.
         tk::spline x_spline, y_spline;
         std::vector<double> x_points, y_points, t_points;
 

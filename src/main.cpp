@@ -34,23 +34,20 @@ double rad2deg(double x) { return x * 180 / pi(); }
 /**************************************************************************************/
 
 
-vector<double> smoothTrajectory(vector<double> traj){
-
-  int traj_size = traj.size();
-  vector<double> new_traj;
-  new_traj.push_back(traj[0]);
-
-  for(int i = 1; i < traj_size-1; ++i){
-    double temp = (traj[i-1] + traj[i] + traj[i+1])/3;
-    new_traj.push_back(temp);
-  }
-  new_traj.push_back(traj[traj_size-1]);
-
-  return new_traj;
-}
-
-
-Trajectory generateTrajectory(Car start, Car end, Trajectory previous, double time_interval, int stitchPoint, MapSpline ms){
+/**
+ * @brief      Generates a smooth trajectory
+ *
+ * @param[in]  start          The start configuration
+ * @param[in]  end            The end configuration
+ * @param[in]  previous       The previous trajectory
+ * @param[in]  time_interval  The time interval between trajectory points
+ * @param[in]  stitchPoint    The point where old trajectory meets new trajectory
+ * @param[in]  ms             The object that converts from Frenet to Cartesian coordinates.
+ *
+ * @return     The generated trajectory
+ */
+Trajectory generateTrajectory(Car start, Car end, Trajectory previous, double
+time_interval, int stitchPoint, MapSpline ms){
   
   double delta_t = 0.02;
  
@@ -58,30 +55,27 @@ Trajectory generateTrajectory(Car start, Car end, Trajectory previous, double ti
   int start_index=0;
 
   if(path_size==0){
+    // In this case, we build a new trajectory from zero
     previous.createJerkMinimized(start, end, time_interval, ms);
   }else{
+    // In this case, we cut and extend an existing trajectory
     previous.extendJerkMinimized(start.s, stitchPoint, end, time_interval, ms);
   }
-
-  // previous.x_vals = smoothTrajectory(previous.x_vals);
-  // previous.y_vals = smoothTrajectory(previous.y_vals);
-
-  // previous.x_vals = smoothTrajectory(previous.x_vals);
-  // previous.y_vals = smoothTrajectory(previous.y_vals);
-
-  // previous.x_vals = smoothTrajectory(previous.x_vals);
-  // previous.y_vals = smoothTrajectory(previous.y_vals);
-
-  // previous.x_vals = smoothTrajectory(previous.x_vals);
-  // previous.y_vals = smoothTrajectory(previous.y_vals);
-
-
-
-  // // cout << "previous size xy: " << previous.x_vals.size() << endl;
 
   return previous;
 }
 
+/**
+ * @brief      Calculates kinematic information of a given trajectory
+ *
+ * @param[in]  traj       The trajectory
+ * @param      minVel     The minimum velocity
+ * @param      maxVel     The maximum velocity
+ * @param      maxAcc     The maximum acceleration
+ * @param      maxJerk    The maximum jerk
+ * @param      maxAngVel  The maximum angle velocity
+ * @param      maxAngAcc  The maximum angle acceleration
+ */
 void calcVelAccJerk(Trajectory traj, double& minVel, double& maxVel, 
   double& maxAcc, double& maxJerk, double& maxAngVel, double& maxAngAcc){
   
@@ -136,18 +130,50 @@ void calcVelAccJerk(Trajectory traj, double& minVel, double& maxVel,
 }
 
 
+/**
+ * @brief      Test if value is in lane or not.
+ *
+ * @param[in]  d     d frenet coordinate
+ *
+ * @return     true if "in lane", false otherwise
+ */
 bool testInLane(double d){
   while(d>4) d-=4;
   return (d>1 && d<3);
 }
 
+/**
+ * @brief      Gets the lane number
+ *
+ * @param[in]  d     d frenet coordinate
+ *
+ * @return     The lane number (0-2)
+ */
 int getLane(double d){
   return (int) d/4.0;
 }
 
+/**
+ * @brief      Tests if value is in the road or not
+ *
+ * @param[in]  d     d frenet coordinate
+ *
+ * @return     True if "in road", false otherwise.
+ */
 bool testInStreet(double d){
   return (d>1 && d<11);
 }
+
+/**
+ * @brief      Calculates lane information about the trajectory
+ *
+ * @param[in]  traj           The trajectory
+ * @param      laneSwitches   Number of lane switches
+ * @param      outsideLane    Number of points in the trajectory where the car
+ *                            was outside the lane
+ * @param      outsideStreet  Number of points in the trajectory where the car
+ *                            was outside the street
+ */
 void calcLanesParameters(Trajectory traj, int& laneSwitches, int& outsideLane, int& outsideStreet){
   laneSwitches=0;
   outsideLane=0;
@@ -175,6 +201,13 @@ void calcLanesParameters(Trajectory traj, int& laneSwitches, int& outsideLane, i
 }
 
 
+/**
+ * @brief      Calculate a score for a given trajectory
+ *
+ * @param[in]  traj  The trajectory
+ *
+ * @return     The score
+ */
 double scoreTrajectory(Trajectory traj){
 
   double score=0;
@@ -239,6 +272,15 @@ double dist(double x1, double y1, double x2, double y2){
   return sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
 }
 
+/**
+ * @brief      Tests if trajectory is expected to collide with other cars
+ *
+ * @param[in]  traj  The trajectory
+ * @param[in]  cars  The other cars on the road
+ * @param[in]  time  The time horizon to test
+ *
+ * @return     True if collision detected,false otherwise
+ */
 bool collides(Trajectory traj, std::vector<Car> cars, double time){
   double time_step = 0.25;
   for(double i=time_step; i <= time; i+=time_step){
@@ -247,6 +289,7 @@ bool collides(Trajectory traj, std::vector<Car> cars, double time){
       double ego_x, ego_y, car_x, car_y;
       double ego_d, ego_s0, car_s, car_d;
 
+      // Assume all cars are going to break
       double speed_factor=0.75;
 
       ego_x = traj.x_vals[traj_index];
@@ -259,6 +302,7 @@ bool collides(Trajectory traj, std::vector<Car> cars, double time){
       car_x = cars[j].x+cars[j].x_v*i*speed_factor;
       car_y = cars[j].y+cars[j].y_v*i*speed_factor;
 
+      // Distance increases with time to reflect the uncertainty
       if(dist (ego_x, ego_y, car_x, car_y) < 8+4*i && abs(ego_d-car_d)<2.5){
          return true;
       }
@@ -488,6 +532,8 @@ int main() {
           	// Sensor Fusion Data, a list of all other cars on the same side of the road.
           	auto sensor_fusion = j[1]["sensor_fusion"];
 
+
+            // Create car array from sensor fusion data
             std::vector<Car> cars;
 
             for(int i =0; i < sensor_fusion.size(); ++i){
@@ -510,6 +556,7 @@ int main() {
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
 
+            // Create Frenet to Cartesian converter using the current position
             MapSpline ms;
             ms.create(car_s, map_waypoints_s, map_waypoints_x, map_waypoints_y, map_waypoints_dx, map_waypoints_dy);
 
@@ -543,7 +590,7 @@ int main() {
                 }
               }
 
-              // Eliminate collision trajectorie
+              // Eliminate collision trajectories
               std::vector<Trajectory> collision_free_trajs;
               for(int i = 0; i < trajs.size(); ++i){
                 if(!collides(trajs[i], cars, T)){

@@ -6,6 +6,15 @@
 using namespace std;
 class MapSpline {
 public:
+
+	/**
+	 * @brief      Gets Cartesian coordinates from Frenet coordinates
+	 *
+	 * @param[in]  s     forward position on the road
+	 * @param[in]  d     lateral position on the road
+	 *
+	 * @return     The xy.
+	 */
 	vector<double> getXY(double s, double d)
 	{
 		s= correct_s(s);
@@ -20,6 +29,13 @@ public:
 		return {x,y};
 	}
 
+	/**
+	 * @brief      Applies a correction to s value if we are in transition area
+	 *
+	 * @param[in]  s     s value
+	 *
+	 * @return     corrected s value
+	 */
 	double correct_s(double s){
 		if(transition && s < 3000){
 	    		s+=6945.554;
@@ -27,8 +43,16 @@ public:
 		return s;
 	}
 
-
-	
+	/**
+	 * @brief      Creates the spline
+	 *
+	 * @param[in]  s                 current s position
+	 * @param[in]  map_waypoints_s   The map waypoints s
+	 * @param[in]  map_waypoints_x   The map waypoints x
+	 * @param[in]  map_waypoints_y   The map waypoints y
+	 * @param[in]  map_waypoints_dx  The map waypoints dx
+	 * @param[in]  map_waypoints_dy  The map waypoints dy
+	 */
 	void create(double s,
 		vector<double> map_waypoints_s,
 		vector<double> map_waypoints_x,
@@ -66,6 +90,14 @@ public:
 
 private:
 
+	/**
+	 * @brief      Gets the previous waypoint
+	 *
+	 * @param[in]  s       s value
+	 * @param[in]  maps_s  The waypoints s values
+	 *
+	 * @return     The previous wp.
+	 */
 	int getPrevWp(double s, vector<double> maps_s){
 		int prev_wp = -1;
 		int size = maps_s.size();
